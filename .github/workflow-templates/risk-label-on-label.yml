@@ -1,0 +1,15 @@
+name: Risk Label Required
+
+on:
+  pull_request_target:
+    types:
+      - labeled
+      - unlabeled
+
+permissions:
+  pull-requests: read
+  issues: read
+
+jobs:
+  verify-risk-label:
+    uses: carequiltca/.github/.github/workflows/risk-label-check.yml@main

@@ -1,0 +1,19 @@
+name: Risk Label Required
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+  merge_group:
+
+permissions:
+  pull-requests: read
+  issues: read
+
+jobs:
+  verify-risk-label:
+    uses: ./.github/workflows/risk-label-check.yml

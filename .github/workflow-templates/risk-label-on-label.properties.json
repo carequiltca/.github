@@ -1,0 +1,6 @@
+{
+  "name": "Risk label check (on label change)",
+  "description": "Re-runs the Risk label requirement when labels are added or removed from a pull request.",
+  "iconName": "tag",
+  "categories": ["Compliance"]
+}

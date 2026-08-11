@@ -1,0 +1,73 @@
+name: Verify Risk Label
+
+on:
+  workflow_call:
+
+jobs:
+  verify-risk-label:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+      issues: read
+    steps:
+      - name: Verify Risk label is present
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const allowedRiskLabels = [
+              'Risk - None',
+              'Risk - Minimal',
+              'Risk - Moderate',
+              'Risk - Critical',
+            ];
+
+            async function getPullRequestNumber() {
+              if (context.payload.pull_request?.number) {
+                return context.payload.pull_request.number;
+              }
+
+              if (context.payload.merge_group) {
+                const commitSha = context.payload.merge_group.head_sha;
+                const { data: pullRequests } =
+                  await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    commit_sha: commitSha,
+                  });
+
+                const openPullRequest = pullRequests.find((pr) => pr.state === 'open');
+                const pullRequest = openPullRequest ?? pullRequests[0];
+
+                if (!pullRequest) {
+                  throw new Error(
+                    `No pull request found for merge group commit ${commitSha}.`,
+                  );
+                }
+
+                return pullRequest.number;
+              }
+
+              throw new Error('Unable to determine pull request number from workflow context.');
+            }
+
+            const pullRequestNumber = await getPullRequestNumber();
+            const { data: labels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullRequestNumber,
+            });
+
+            const labelNames = labels.map(({ name }) => name);
+            const riskLabels = labelNames.filter((name) =>
+              allowedRiskLabels.includes(name),
+            );
+
+            if (riskLabels.length === 0) {
+              core.setFailed(
+                'This pull request must have one of the following risk labels: ' +
+                  allowedRiskLabels.join(', '),
+              );
+              return;
+            }
+
+            core.info(`Found required risk label: ${riskLabels.join(', ')}`);
