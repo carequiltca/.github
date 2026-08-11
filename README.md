@@ -20,8 +20,8 @@ Pull requests must include exactly one of these risk labels:
 | File | Purpose |
 | --- | --- |
 | `.github/workflows/risk-label-check.yml` | Reusable workflow with the label validation logic |
-| `.github/workflows/risk-label-required.yml` | Org ruleset entry point; runs on PR open/update and merge queue |
-| `.github/workflow-templates/risk-label-on-label.yml` | Optional per-repo workflow; re-runs the check when labels change |
+| `.github/workflows/risk-label-required.yml` | Org ruleset entry point; runs on PR open/update, label changes, and merge queue |
+| `.github/workflow-templates/risk-label-on-label.yml` | Legacy per-repo fallback for older org workflow versions |
 
 ### 1. Enable org-wide enforcement (required)
 
@@ -33,16 +33,18 @@ Pull requests must include exactly one of these risk labels:
 
 If the `.github` repository is private or internal, allow other repositories in the organization to use its workflows and reusable workflows.
 
-Organization rulesets run required workflows on `pull_request` open, synchronize, and reopen events. They do not automatically re-run when a label is added.
+Organization rulesets only *require* the check on `pull_request` open, synchronize, and reopen events. The org workflow also listens for `labeled` and `unlabeled` events so the check re-runs automatically when a risk label is added or removed—no new commit needed.
 
-### 2. Re-run on label changes (recommended)
+After merging workflow changes to `main`, add or remove a label on an existing PR to confirm the **Risk Label Required** check re-runs.
 
-To automatically re-evaluate the check after a risk label is added or removed, add the workflow template to each repository:
+### 2. Re-run on label changes (legacy fallback)
+
+Repositories that pinned an older version of the org workflow (without `labeled` / `unlabeled` triggers) can still add the workflow template locally:
 
 1. In a repository, go to **Actions → New workflow**.
 2. Choose **Risk label check (on label change)** from the organization workflow templates (or copy `.github/workflow-templates/risk-label-on-label.yml` into `.github/workflows/`).
 3. Commit the workflow to the default branch.
 
-This template uses the same workflow and job names as the org ruleset workflow, so a passing run updates the same required status check and unblocks merge without a new commit.
+This template uses the same workflow and job names as the org ruleset workflow, so a passing run updates the same required status check.
 
-If a repository does not include the on-label workflow, add the risk label and then use **Re-run failed jobs** on the failed **Risk Label Required** check.
+If the check still does not re-run after a label change, use **Re-run failed jobs** on the failed **Risk Label Required** check.

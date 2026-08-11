@@ -2,6 +2,12 @@ name: Risk Label Required
 
 on:
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
   merge_group:
 
 permissions:
